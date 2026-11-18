@@ -56,6 +56,24 @@ func TestLEB128Marshal(t *testing.T) {
 	}
 }
 
+func TestLEB128UnmarshalErrors(t *testing.T) {
+	for _, ca := range []struct {
+		name string
+		enc  []byte
+	}{
+		{"empty", []byte{}},
+		{"truncated", []byte{0x80}},
+		{"truncated after four bytes", []byte{0x80, 0x80, 0x80, 0x80}},
+		{"exceeds 32 bits", []byte{0xFF, 0xFF, 0xFF, 0xFF, 0x1F}},
+	} {
+		t.Run(ca.name, func(t *testing.T) {
+			var dec LEB128
+			_, err := dec.Unmarshal(ca.enc)
+			require.Error(t, err)
+		})
+	}
+}
+
 func FuzzLEB128Unmarshal(f *testing.F) {
 	for _, ca := range casesLEB128 {
 		f.Add(ca.enc)

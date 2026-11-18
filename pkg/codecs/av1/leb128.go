@@ -22,15 +22,19 @@ func (l *LEB128) Unmarshal(buf []byte) (int, error) {
 		var b byte
 		b, buf = buf[0], buf[1:]
 
+		if i == 4 && (b&0b11110000) != 0 {
+			return 0, fmt.Errorf("LEB128 value exceeds 32 bits")
+		}
+
 		*l |= (LEB128(b&0b01111111) << (i * 7))
 		n++
 
 		if (b & 0b10000000) == 0 {
-			break
+			return n, nil
 		}
 	}
 
-	return n, nil
+	return 0, fmt.Errorf("LEB128 value exceeds 32 bits")
 }
 
 // MarshalSize returns the marshal size in bytes of the unsigned integer in LEB128 format.
